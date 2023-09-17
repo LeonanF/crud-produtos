@@ -1,23 +1,17 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
-)
-
-var (
-	conn *sql.DB
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type User struct {
-	Name string
-	Age  int
+	Name string `json:"name"`
+	Age  string `json:"age"`
 }
 
 func main() {
@@ -29,67 +23,43 @@ func main() {
 		c.File("static/index.html")
 	})
 
-	// Rota para processar o envio do formulário
-	server.POST("/processar", func(c *gin.Context) {
-		// Recupere os dados do formulário
-		nome := c.PostForm("nome")
-		idade := c.PostForm("idade")
-
-		idadeInt, err := strconv.Atoi(idade)
-		if err != nil {
-			// Lida com erros de conversão, se necessário
-			c.String(http.StatusBadRequest, "Erro: O valor não é um número inteiro válido.")
-			return
-		}
-
-		user := User{
-			Name: nome,
-			Age:  idadeInt,
-		}
-
-		DatabaseConnection()
-
-		if insertError := DatabaseInsertion(user); insertError != nil {
-			c.String(http.StatusInternalServerError, "Erro ao inserir no banco de dados: "+err.Error())
-			return
-		}
-
-		c.String(http.StatusOK, "Dados do formulário recebidos e inseridos no banco de dados com sucesso!")
-
-	})
-
-	// Inicia o servidor
-	server.Run()
-}
-
-func DatabaseConnection() {
-
-	var err error
-
-	// Acesse as variáveis de ambiente para obter informações sensíveis
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-
-	stringConnection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
-
-	// Conecte-se ao banco de dados
-	conn, err = sql.Open("mysql", stringConnection)
+	// Conecte-se ao MongoDB
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://leonanfreitas:qtHEEIuQ84ePeavH@cluster0.2inszqq.mongodb.net/?retryWrites=true&w=majority"))
 	if err != nil {
 		panic(err)
 	}
-
-}
-
-func DatabaseInsertion(user User) error {
-	// Use um comando preparado com placeholders
-	_, err := conn.Exec("INSERT INTO user_data (nome, idade) VALUES (?, ?)", user.Name, user.Age)
+	ctx := context.TODO()
+	err = client.Connect(ctx)
 	if err != nil {
-		fmt.Println("Erro ao inserir no banco de dados:", err.Error())
-		return err
+		panic(err)
 	}
+	defer client.Disconnect(ctx)
 
-	return nil
+	// Coleção de usuários no MongoDB
+	collection := client.Database("users_db").Collection("users")
+
+	server.POST("/processar", func(c *gin.Context) {
+		// Obtenha o valor do campo "nome" do formulário
+		nome := c.PostForm("nome")
+
+		// Obtenha o valor do campo "idade" do formulário
+		idade := c.PostForm("idade")
+
+		// Crie um novo documento BSON com base nos valores do formulário
+		user := User{
+			Name: nome,
+			Age:  idade,
+		}
+
+		// Insira o documento no MongoDB
+		insertResult, err := collection.InsertOne(ctx, user)
+		if err != nil {
+			panic(err)
+		}
+
+		// Imprima o ID do documento inserido
+		fmt.Println("ID do documento inserido:", insertResult.InsertedID)
+	})
+
+	server.Run(":8080") // Altere a porta, se necessário
 }
