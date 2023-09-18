@@ -11,5 +11,12 @@
         <input type="text" id="idade" name="idade"><br>
         <input type="submit" value="Enviar">
     </form>
+
+    <ul>
+        {{range .Users}}
+        <li>{{.Name}} - {{.Age}}</li>
+    {{end}}
+    </ul>
+
 </body>
 </html>
