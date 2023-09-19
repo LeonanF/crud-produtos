@@ -7,14 +7,14 @@
     <form method="post" action="/processar">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome"><br>
-        <label for="Idade">Idade:</label>
-        <input type="text" id="idade" name="idade"><br>
+        <label for="valor">Valor:</label>
+        <input type="text" id="valor" name="valor"><br>
         <input type="submit" value="Enviar">
     </form>
 
     <ul>
         {{range .Users}}
-        <li>{{.Name}} - {{.Age}}</li>
+        <li>{{.Name}} - {{.Value}}</li>
     {{end}}
     </ul>
 
