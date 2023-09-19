@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,8 +13,8 @@ import (
 )
 
 type Produtos struct {
-	Name string `json:"name"`
-	Age  string `json:"age"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 func main() {
@@ -23,10 +23,10 @@ func main() {
 	// Carregue os modelos HTML
 	server.LoadHTMLGlob("static/*")
 
-	MONGODB_URI = os.Getenv("MONGODB_URI")
-	DB_NAME = os.Getenv("DB_NAME")
-	COLLECTION_NAME = os.Getenv("COLLECTION_NAME")
-	
+	MONGODB_URI := os.Getenv("MONGODB_URI")
+	DB_NAME := os.Getenv("DB_NAME")
+	COLLECTION_NAME := os.Getenv("COLLECTION_NAME")
+
 	// Conecte-se ao MongoDB
 	client, err := mongo.NewClient(options.Client().ApplyURI(MONGODB_URI))
 	if err != nil {
@@ -79,8 +79,8 @@ func main() {
 
 		// Crie um novo documento BSON com base nos valores do formulário
 		produto := Produtos{
-			Name: nome,
-			Value:  valor,
+			Name:  nome,
+			Value: valor,
 		}
 
 		// Insira o documento no MongoDB
