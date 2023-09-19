@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,8 +14,16 @@ import (
 )
 
 type Produtos struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Name        string `json:"name"`
+	Value       string `json:"value"`
+	Category    string `json:"category"`
+	Description string `json:"description"`
+}
+
+type Config struct {
+	MongoDBURI     string `json:"MONGODB_URI"`
+	DatabaseName   string `json:"DATABASE_NAME"`
+	CollectionName string `json:"COLLECTION_NAME"`
 }
 
 func main() {
@@ -23,21 +32,48 @@ func main() {
 	// Carregue os modelos HTML
 	server.LoadHTMLGlob("static/*")
 
+	if os.Getenv("MONGODB_URI") == "" {
+		// Abra o arquivo config.json e em caso de erro, imprime o erro e encerra a função
+		configFile, err := os.Open("config.json")
+		if err != nil {
+			fmt.Println("Erro ao abrir o arquivo de configuração:", err)
+			return
+		}
+
+		//Garante que o arquivo seja fechado no fim da execução
+		defer configFile.Close()
+
+		//Criada váriavel do tipo Config (struct no início) para armazenar os dados do arquivo .json
+		var config Config
+
+		// É criado um novo decodificador para ler os dados do arquivo configFile
+		decoder := json.NewDecoder(configFile)
+
+		//O código a seguir é que vai, efetivamente, decodificar e converter o JSON em uma estrutura de dados do tipo Config
+		//Para entender a criação de err como váriavel de bloco, verificar documentação da função createServer()
+		//Em caso de erro, a função é imediatamente encerrada e o erro é impresso
+		if err := decoder.Decode(&config); err != nil {
+			fmt.Println("Erro ao decodificar o arquivo de configuração:", err)
+			return
+		}
+
+		//Seta as variáveis de ambiente com os valores do arquivo de configuração (propriedades do struct Config)
+		os.Setenv("MONGODB_URI", config.MongoDBURI)
+		os.Setenv("DATABASE_NAME", config.DatabaseName)
+		os.Setenv("COLLECTION_NAME", config.CollectionName)
+	}
+
 	MONGODB_URI := os.Getenv("MONGODB_URI")
-	DB_NAME := os.Getenv("DB_NAME")
+	DB_NAME := os.Getenv("DATABASE_NAME")
 	COLLECTION_NAME := os.Getenv("COLLECTION_NAME")
 
 	// Conecte-se ao MongoDB
-	client, err := mongo.NewClient(options.Client().ApplyURI(MONGODB_URI))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(MONGODB_URI))
 	if err != nil {
 		panic(err)
 	}
-	ctx := context.TODO()
-	err = client.Connect(ctx)
-	if err != nil {
-		panic(err)
-	}
-	defer client.Disconnect(ctx)
+
+	defer client.Disconnect(context.Background())
 
 	// Coleção de produtos no MongoDB
 	collection := client.Database(DB_NAME).Collection(COLLECTION_NAME)
@@ -84,7 +120,7 @@ func main() {
 		}
 
 		// Insira o documento no MongoDB
-		insertResult, err := collection.InsertOne(ctx, produto)
+		insertResult, err := collection.InsertOne(context.Background(), produto)
 		if err != nil {
 			panic(err)
 		}
