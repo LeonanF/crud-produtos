@@ -128,6 +128,14 @@ func main() {
 		// Imprima o ID do documento inserido
 		fmt.Println("ID do documento inserido:", insertResult.InsertedID)
 	})
+	//O código busca o valor da váriavel de ambiente PORT
+	port := os.Getenv("PORT")
 
-	server.Run(":8080") // Altere a porta, se necessário
+	//É feito um teste para definir se o valor da variável está vazio/variável não definida. Caso esteja, é atribuído um valor padrão à variável
+	if port == "" {
+		port = "8080"
+	}
+
+	// Inicia o servidor com a porta definida acima
+	server.Run(":" + port)
 }
