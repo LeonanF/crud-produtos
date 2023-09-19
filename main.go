@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
+	"os"
+	
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type User struct {
+type Produtos struct {
 	Name string `json:"name"`
 	Age  string `json:"age"`
 }
@@ -22,8 +23,12 @@ func main() {
 	// Carregue os modelos HTML
 	server.LoadHTMLGlob("static/*")
 
+	MONGODB_URI = os.Getenv("MONGODB_URI")
+	DB_NAME = os.Getenv("DB_NAME")
+	COLLECTION_NAME = os.Getenv("COLLECTION_NAME")
+	
 	// Conecte-se ao MongoDB
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://leonanfreitas:qtHEEIuQ84ePeavH@cluster0.2inszqq.mongodb.net/?retryWrites=true&w=majority"))
+	client, err := mongo.NewClient(options.Client().ApplyURI(MONGODB_URI))
 	if err != nil {
 		panic(err)
 	}
@@ -34,8 +39,8 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
-	// Coleção de usuários no MongoDB
-	collection := client.Database("users_db").Collection("users")
+	// Coleção de produtos no MongoDB
+	collection := client.Database(DB_NAME).Collection(COLLECTION_NAME)
 
 	// Configure o roteamento para servir o arquivo "index.html" como página principal
 	server.GET("/", func(c *gin.Context) {
@@ -49,19 +54,19 @@ func main() {
 			return
 		}
 
-		var users []User
+		var produtos []Produtos
 
 		// Itere pelos documentos no cursor.
 		for cursor.Next(context.Background()) {
-			var user User
-			if err := cursor.Decode(&user); err != nil {
+			var produto Produtos
+			if err := cursor.Decode(&produto); err != nil {
 				c.AbortWithStatus(500)
 				return
 			}
-			users = append(users, user)
+			produtos = append(produtos, produto)
 		}
 		c.HTML(http.StatusOK, "index.html", gin.H{
-			"Users": users,
+			"Produtos": produtos,
 		})
 	})
 
@@ -70,16 +75,16 @@ func main() {
 		nome := c.PostForm("nome")
 
 		// Obtenha o valor do campo "idade" do formulário
-		idade := c.PostForm("idade")
+		valor := c.PostForm("valor")
 
 		// Crie um novo documento BSON com base nos valores do formulário
-		user := User{
+		produto := Produtos{
 			Name: nome,
-			Age:  idade,
+			Value:  valor,
 		}
 
 		// Insira o documento no MongoDB
-		insertResult, err := collection.InsertOne(ctx, user)
+		insertResult, err := collection.InsertOne(ctx, produto)
 		if err != nil {
 			panic(err)
 		}
