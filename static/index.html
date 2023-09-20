@@ -43,7 +43,9 @@
             <div id="container-lista-prod" class="flex justify-center gap-16 h-full w-full flex-wrap my-16">
 
                 {{range .Produtos}}
-                <div class="flex flex-col justify-evenly w-1/4 h-min p-4 text-center bg-emerald-300 rounded-xl outer-container">
+                <div class="flex flex-col justify-evenly w-1/4 h-min p-4 text-center bg-emerald-300 rounded-xl outer-container relative">
+                    <div class="arrow-img before:absolute before:shadow-[2px_-2px_0_1px_black] before:border-l-2 before:border-b-2 before:border-transparent before:p-1 before:rotate-[135deg] before:right-6 before:top-[30px] before:-translate-y-2">
+                    </div>
                     <h1>
                         {{.Name}}
                     </h1>
