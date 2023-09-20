@@ -30,7 +30,10 @@ func main() {
 	// Crie um novo servidor Gin
 	server := gin.New()
 	// Carregue os modelos HTML
-	server.LoadHTMLGlob("static/*")
+	server.LoadHTMLGlob("static/*.html")
+
+	// Configura a rota /static para servir arquivos estáticos da pasta "static"
+	server.Static("/static", "./static")
 
 	if os.Getenv("MONGODB_URI") == "" {
 		// Abra o arquivo config.json e em caso de erro, imprime o erro e encerra a função
@@ -101,32 +104,44 @@ func main() {
 			}
 			produtos = append(produtos, produto)
 		}
+
+		// Verifique se há um parâmetro "success" na URL
+		success := c.DefaultQuery("success", "false")
+
+		// Renderize a página HTML com base na condição de sucesso
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Produtos": produtos,
+			"Success":  success == "true", // Define "Success" como verdadeiro se "success" for igual a "true"
 		})
+
 	})
 
 	server.POST("/processar", func(c *gin.Context) {
 		// Obtenha o valor do campo "nome" do formulário
 		nome := c.PostForm("nome")
-
-		// Obtenha o valor do campo "idade" do formulário
+		// Obtenha o valor do campo "valor" do formulário
 		valor := c.PostForm("valor")
+		//Obtenha o valor do campo "categoria" do formulário
+		categoria := c.PostForm("categoria")
+		//Obtenha o valor do campo "descrição" do formulário
+		descricao := c.PostForm("descricao")
 
 		// Crie um novo documento BSON com base nos valores do formulário
 		produto := Produtos{
-			Name:  nome,
-			Value: valor,
+			Name:        nome,
+			Value:       valor,
+			Category:    categoria,
+			Description: descricao,
 		}
 
 		// Insira o documento no MongoDB
-		insertResult, err := collection.InsertOne(context.Background(), produto)
+		_, err := collection.InsertOne(context.Background(), produto)
 		if err != nil {
 			panic(err)
 		}
 
-		// Imprima o ID do documento inserido
-		fmt.Println("ID do documento inserido:", insertResult.InsertedID)
+		c.Redirect(http.StatusSeeOther, "/?success=true")
+
 	})
 	//O código busca o valor da váriavel de ambiente PORT
 	port := os.Getenv("PORT")

@@ -2,21 +2,69 @@
 <html>
 <head>
     <title>Formulário de Exemplo</title>
+    <link rel="stylesheet" href="static/dist/main-tailwind.css">
+    <script src="static/js/index.js" defer></script>
 </head>
-<body>
-    <form method="post" action="/processar">
+<body class="bg-main-light h-screen">
+    
+    <section id="form" class="flex flex-col items-center justify-center min-h-[50vh] text-center text-main-light p-8">
+    <form method="post" action="/processar" class="flex flex-col bg-main-brown h-full w-max p-8 rounded-xl gap-4">
         <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome"><br>
+        <input type="text" id="nome" name="nome" class="text-black rounded" required>
+        
         <label for="valor">Valor:</label>
-        <input type="text" id="valor" name="valor"><br>
-        <input type="submit" value="Enviar">
+        <input type="text" id="valor" name="valor" class="text-black rounded" required>
+        
+        
+        <label for="descricao">Descrição:</label>
+        <textarea type="text" id="descricao" name="descricao" class="text-black rounded resize-none" rows="1" required ></textarea>
+        
+        
+        <label for="categoria">Categoria:</label>
+        <select id="categoria" name="categoria" class="text-black rounded" required>
+            <option value="" selected></option>
+            <option value="Bolos">Bolos</option>
+            <option value="Sobremesas">Sobremesas</option>
+            <option value="Especial">Especial</option>
+        </select>
+        
+        <input type="submit" value="Enviar" class="border-2 rounded-xl p-1 cursor-pointer hover:scale-90 duration-200">
     </form>
+        {{ if .Success }}
+            <div class="my-8 bg-emerald-400 text-main-brown p-2 rounded-xl">
+                Dados enviados com sucesso!
+            </div>
+        {{ end }}
+    </section>
+    
+        <section id="prod-exhibition" class="flex justify-center font-semibold text-xl w-full min-h-[50vh] break-words">
+    
+            <div id="container-lista-prod" class="flex justify-center gap-16 h-full w-full flex-wrap my-16">
 
-    <ul>
-        {{range .Produtos}}
-        <li>{{.Name}} - {{.Value}}</li>
-    {{end}}
-    </ul>
+                {{range .Produtos}}
+                <div class="flex flex-col justify-evenly w-1/4 h-min p-4 text-center bg-emerald-300 rounded-xl outer-container">
+                    <h1>
+                        {{.Name}}
+                    </h1>
+                    <div class="hidden inner-container">
+                    <div id="main-prod" class=" flex flex-col gap-4 p-4">
+                        <h2>
+                            {{.Value}}
+                        </h2>
+                        <h3>
+                            {{.Category}}
+                        </h3>
+                    
+                        <p>
+                            {{.Description}}
+                        </p>
+                    </div>    
+                </div>
+                </div>
+                {{end}}
+                
+            </div>
+    </section>
 
 </body>
 </html>
